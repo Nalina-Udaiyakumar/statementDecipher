@@ -24,7 +24,8 @@ library(plyr)
 #### ---------- Reading the credit card statements
 
 # Setting directory to the credit card statements folder
-setwd('C:/Common files/RBC statements and spending calc/Credit card statements')
+setwd('your directory path here')
+## !!!! Don't forget to put your directory path here before you execute!!!
 
 # Listing files in the directory 
 filesInDir <- file.info(list.files(full.names = T))
