@@ -105,7 +105,7 @@ listOfCustomStores <- c("Amazon", "Doordash","AMZN", "Bulk Barn",
                         "Pizza", "Pita Pit", "Wingery", "Royal Spice",
                         "Dyments Farm", "Sensational Samosa", "Red Lobster", "Starbucks", 
                         "Skipthedishes", "Bombay Spices", "Dental", "Dentist",
-                        "Insurance", "Payroll Deposit", "Kingscrt", "Special Deposit",
+                        "Insurance", "Payroll Deposit", "Apartment", "Special Deposit",
                         "Copper Kettle", "WAL*MART", "Supercuts", "Sephora")
 
 listOfCustomCategories <- c("Shopping", "Food - Take out", "Shopping", "Groceries", 
