@@ -76,6 +76,11 @@ listOfGasStations <- webpage %>%
   html_nodes("li") %>%
   html_text()
 listOfGasStations <- listOfGasStations[3:26]
+# Convert list of gas stations to a dataframe and append it to store directory
+listOfGasStations <- data.frame(listOfGasStations)
+colnames(listOfGasStations) <- "StoreName"
+# Adding the category "Gas" for the above store names
+listOfGasStations$Category <- "Fuel"
 
 
 ## Scraping clothing stores -----------------
@@ -88,6 +93,11 @@ parsed_doc <- htmlParse(source, encoding = "UTF-8")
 # Extracting the list of clothing store  names
 listOfClothingStores <- xpathSApply(parsed_doc, path = '/html/body/div[3]/div[3]/div[5]/div/ul/li/a', xmlValue)
 listOfClothingStores <- str_trim(listOfClothingStores)
+# Convert list of clothing stores to a dataframe and append it to store directory
+listOfClothingStores <- data.frame(listOfClothingStores)
+colnames(listOfClothingStores) <- "StoreName"
+# Adding the category for the clothing stores
+listOfClothingStores$Category <- "Clothing" 
 
 
 
@@ -98,34 +108,42 @@ url <- "https://en.wikipedia.org/wiki/List_of_Canadian_stores"
 ## ------------- For later -------------------
 
 ## Add custom rows to the store directory - payments via apps, online shopping and utilities-----
-listOfCustomStores <- c("Amazon", "Doordash","AMZN", "Bulk Barn", 
-                        "Marshalls", "Netflix", "Cineplex", "Disney",
-                        "Chatr", "COGECO", "Wyse", "Children's Place",
-                        "WAL-MART", "AMAZON.CA PRIME MEMBER", "Tim Hortons", "McDonalds",
-                        "Pizza", "Pita Pit", "Wingery", "Royal Spice",
-                        "Dyments Farm", "Sensational Samosa", "Red Lobster", "Starbucks", 
-                        "Skipthedishes", "Bombay Spices", "Dental", "Dentist",
-                        "Insurance", "Payroll Deposit", "Apartment", "Special Deposit",
-                        "Copper Kettle", "WAL*MART", "Supercuts", "Sephora")
+# listOfCustomStores <- c("Amazon", "Doordash","AMZN", "Bulk Barn", 
+#                         "Marshalls", "Netflix", "Cineplex", "Disney",
+#                         "Chatr", "COGECO", "Wyse", "Children's Place",
+#                         "WAL-MART", "AMAZON.CA PRIME MEMBER", "Tim Hortons", "McDonalds",
+#                         "Pizza", "Pita Pit", "Wingery", "Royal Spice",
+#                         "Dyments Farm", "Sensational Samosa", "Red Lobster", "Starbucks", 
+#                         "Skipthedishes", "Bombay Spices", "Dental", "Dentist",
+#                         "Insurance", "Payroll Deposit", "Kingscrt", "Special Deposit",
+#                         "Copper Kettle", "WAL*MART", "Supercuts", "Sephora",
+#                         "Payment", "Fee", "Indian Grocers", "Leela Supermarket",
+#                         "Anjappar")
+# 
+# listOfCustomCategories <- c("Shopping - Amazon", "Food - Take out", "Shopping - Amazon", "Groceries", 
+#                             "Shopping", "Entertainment", "Entertainment", "Entertainment",
+#                             "Phone", "Internet", "Electricity", "Clothing",
+#                             "Shopping", "Entertainment", "Coffee", "Food - Take out",
+#                             "Food - Take out", "Food - Take out", "Food - Take out", "Restaurant",
+#                             "Groceries", "Food - Take out", "Restaurant", "Coffee",
+#                             "Food - Take out", "Restaurant", "Healthcare - Dental", "Healthcare - Dental",
+#                             "Insurance", "Salary", "Rent", "Savings - RESP",
+#                             "Restaurant", "Shopping", "Grooming", "Grooming",
+#                             "Credit card payment", "Banking fee", "Groceries", "Groceries",
+#                             "Restaurant")
+# 
+# customListOfStores <- data.frame(
+#   listOfCustomStores,
+#   listOfCustomCategories,
+#   stringsAsFactors = FALSE
+# )
+# colnames(customListOfStores) <- c("StoreName", "Category")
+# write.csv(customListOfStores,"Custom list of stores.csv", 
+#           row.names = FALSE)
 
-listOfCustomCategories <- c("Shopping", "Food - Take out", "Shopping", "Groceries", 
-                            "Shopping", "Entertainment", "Entertainment", "Entertainment",
-                            "Phone", "Internet", "Electricity", "Clothing",
-                            "Shopping", "Entertainment", "Coffee", "Food - Take out",
-                            "Food - Take out", "Food - Take out", "Food - Take out", "Restaurant",
-                            "Groceries", "Food - Take out", "Restaurant", "Coffee",
-                            "Food - Take out", "Restaurant", "Healthcare - Dental", "Healthcare - Dental",
-                            "Insurance", "Salary", "Rent", "Savings - RESP",
-                            "Restaurant", "Shopping", "Grooming", "Grooming")
-
-customListOfStores <- data.frame(
-  listOfCustomStores,
-  listOfCustomCategories,
-  stringsAsFactors = FALSE
-)
-colnames(customListOfStores) <- c("StoreName", "Category")
-
-
+## Read custom list of stores from a csv file in the working directory
+customListOfStores <- read.csv("Custom list of stores.csv", stringsAsFactors = FALSE,
+                               header = TRUE)
 
 ## Remove repetitions and creating store directory ---------------------------
 # Remove repetitions of store names in supermarket and superstore categories 
@@ -151,10 +169,6 @@ colnames(listOfSupermarkets) <- "StoreName"
 # Adding the category "Groceries" for the supermarkets
 listOfSupermarkets$Category <- "Groceries"
 
-# Creating a store directory dataframe with all store names and categories, 
-#  to be used as lookup for categorizing each transaction, add supermarkets to it
-storeDirectory <- listOfSupermarkets
-
 
 ## Marking drug stores in the list of superstores as "Healthcare - pharmacy"
 # Creating a list of drug stores from the list of superstores
@@ -175,36 +189,22 @@ colnames(listOfDrugStores) <- "StoreName"
 # Adding the category "Healthcare - Pharmacy" for the drug stores
 listOfDrugStores$Category <- "Healthcare - Pharmacy"
 
+
+## Create Store Directory------------
+# Creating a store directory dataframe with all store names and categories, 
+#  to be used as lookup for categorizing each transaction, add supermarkets to it
+storeDirectory <- listOfSupermarkets
+
 # Appending the list of superstores to the store directory
 storeDirectory <- rbind.data.frame(storeDirectory,listOfSuperstores)
 # Appending the list of drug stores to the store directory
 storeDirectory <- rbind.data.frame(storeDirectory,listOfDrugStores)
-
-# Convert list of gas stations to a dataframe and append it to store directory
-listOfGasStations <- data.frame(listOfGasStations)
-colnames(listOfGasStations) <- "StoreName"
-# Adding the category "Gas" for the above store names
-listOfGasStations$Category <- "Fuel"
 # Appending list of gas stations to store directory
 storeDirectory <- rbind.data.frame(storeDirectory,listOfGasStations)
-
-
-# Convert list of clothing stores to a dataframe and append it to store directory
-listOfClothingStores <- data.frame(listOfClothingStores)
-colnames(listOfClothingStores) <- "StoreName"
-# Adding the category for the clothing stores
-listOfClothingStores$Category <- "Clothing" 
 # Appending list of clothing stores to store directory
 storeDirectory <- rbind.data.frame(storeDirectory,listOfClothingStores)
 
-### Checks -------------------
 # Eliminate duplicates with the custom list of store additions and add them to directory
 VectorizedGrep(listOfCustomStores,storeDirectory$StoreName)
-
 storeDirectory <- rbind.data.frame(storeDirectory,customListOfStores)
-storeDirectory$Rank <- NA
-storeDirectory <- storeDirectory[order(storeDirectory$StoreName),]
-storeDirectory$Rank <- rank(storeDirectory$StoreName)
-a <- table(storeDirectory$Rank)
-## Check: If unique(a)=1 then the store directory has no duplicate store names
-print(unique(a))
+
