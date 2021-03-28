@@ -25,13 +25,13 @@ library(xlsx)
 #### ---------- Reading the credit card statements
 
 # Setting directory to the credit card statements folder
-# setwd('Your directory path)
-# !! Don't forget to put your directory path above!!
+setwd('//Your directory here//')
 
 # Listing files in the directory 
 filesInDir <- file.info(list.files(full.names = T))
 # Getting the file name with the most recent modified time
-recentFileName <- rownames(filesInDir)[which.max(filesInDir$mtime)]
+# recentFileName <- rownames(filesInDir)[which.max(filesInDir$mtime)]
+recentFileName <- rownames(filesInDir)[1]
 print(recentFileName)
 
 # Reading in the most recent credit card statement pdf file 
@@ -52,12 +52,56 @@ creditCardStatementDf <- data.frame()
 for(i in 1:(length(creditCardStatement)))
 {
   currentCCStatementPage <- creditCardStatement[i] %>%
-    readr::read_lines()                      
+    readr::read_lines()                      ##---- replace 1 with i
   
-  ## Fixing issue with a particular transaction line
+  ## Fixing issue with a couple of particular transaction line cases
   currentCCStatementPage <- currentCCStatementPage %>%
     str_replace(pattern = "PAYMENT - THANK YOU",
                 replacement = "    PAYMENT - THANK YOU")
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "PAYBACK WITH POINTS",
+                replacement = "    PAYBACK WITH POINTS")
+  ## Introduce deliberate line breaks to separate transaction lines
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "NEW BALANCE",
+                replacement = "\n\nNEW BALANCE")
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "CONTACT US",
+                replacement = "\n\nCONTACT US")
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "Collect Outside North America",
+                replacement = "\n\nCollect Outside North America")
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "Minimum payment",
+                replacement = "\n\nMinimum payment")
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "Credit limit",
+                replacement = "\n\nCredit limit")
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "Annual interest rates",
+                replacement = "\n\nAnnual interest rates")
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "Cash advances",
+                replacement = "\n\nCash advances")
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "CALCULATING YOUR BALANCE",
+                replacement = "\n\nCALCULATING YOUR BALANCE")
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "Payments & credits",
+                replacement = "\n\nPayments & credits")
+  currentCCStatementPage <- currentCCStatementPage %>%
+    str_replace(pattern = "Fees",
+                replacement = "\n\nFees")
+  
+    
+  # Splitting by "\n\n" to insert line breaks at the required positions
+  currentCCStatementPage <- currentCCStatementPage %>%
+    strsplit(split="\n\n")
+  
+  # Keep only the first element in each element of the list 
+  currentCCStatementPage <- 
+    lapply(currentCCStatementPage,
+           function(x) x[[1]])
   
   ## ! Update: splitting after deliberately inserting spaces after transaction and posting dates
   # currentCCStatementPage <- currentCCStatementPage %>%
@@ -83,6 +127,7 @@ for(i in 1:(length(creditCardStatement)))
   transactionTable <- transactionTable %>%
     str_replace(pattern = "PAYMENT - THANK YOU",
                 replacement = "    PAYMENT - THANK YOU")
+  
   
   ## Inserting spaces in strings after transaction date: 
   # Creating regex to indentify the position of transaction date in a string
@@ -122,7 +167,7 @@ for(i in 1:(length(creditCardStatement)))
                                                    end = str_length(transactionTable1$transactionTable))
                                            )
   
-  ## The starting and ending position of the transaction date are always 1 and 7  -!! Scope to update this at a future time
+  ## The starting and ending position of the transaction date are always 1 and 7
   # Insert "    " after transaction date
   transactionTable1$correctedData <- paste(str_sub(transactionTable1$correctedData,
                                                                    start = 1,
@@ -140,12 +185,14 @@ for(i in 1:(length(creditCardStatement)))
   transactionAmountFormat <- regex(transactionAmountFormat)
   
   # Locate the position of the $ sign
+  ## Getting only the first element of position vector for each element in the list
   transactionTable1$transactionAmountPositionstart <- 
     lapply(str_locate_all(transactionTable1$correctedData,transactionAmountFormat),
            function(x) as.integer(x[1,1]))
   
-  transactionTable1$transactionAmountPositionbeforestart <- as.integer(transactionTable1$transactionAmountPositionstart)-2
+  transactionTable1$transactionAmountPositionbeforestart <- as.integer(transactionTable1$transactionAmountPositionstart)-3
   transactionTable1$transactionAmountPositionafterstart <- as.integer(transactionTable1$transactionAmountPositionstart)+1
+  
  
   # Insert "    " before the $ or -$ sign
   transactionTable1$correctedData <- paste(str_sub(transactionTable1$correctedData,
@@ -153,7 +200,7 @@ for(i in 1:(length(creditCardStatement)))
                                                    end = transactionTable1$transactionAmountPositionbeforestart),
                                            "    ",
                                            str_sub(transactionTable1$correctedData,
-                                                   start = transactionTable1$transactionAmountPositionafterstart,
+                                                   start = transactionTable1$transactionAmountPositionbeforestart,
                                                    end = str_length(transactionTable1$correctedData))
                                            )
   
@@ -168,7 +215,8 @@ for(i in 1:(length(creditCardStatement)))
     strsplit(split="    ") 
   
   # Flagging all elements with zero length
-  elementsToKeep <- sapply(transactionTable,function(el) as.integer(as.logical(str_length(el))))
+  elementsToKeep <- sapply(transactionTable,function(el) str_length(el))
+  elementsToKeep <- sapply(transactionTable,function(el) as.integer(as.logical(str_length(str_trim(el)))))
   
   ## Check
   rowsumElements <- sapply(elementsToKeep,sum)
@@ -206,20 +254,23 @@ for(i in 1:(length(creditCardStatement)))
   transactiondf$Description <- str_trim(transactiondf$Description)
   transactiondf$Amount <- str_trim(transactiondf$Amount)
   
-  # Converting dates to date format from string
-  transactiondf$'Transaction Date' <- as.Date(transactiondf$'Transaction Date', "%B %d")
-  transactiondf$`Posting Date` <- as.Date(transactiondf$`Posting Date`, "%B %d")
+  # Converting dates to date format from string - not converting. I like the %b-%d format. Don't want year in the format.
+  # transactiondf$'Transaction Date' <- as.Date(transactiondf$'Transaction Date', "%B %d")
+  # transactiondf$`Posting Date` <- as.Date(transactiondf$`Posting Date`, "%B %d")
   
   # Converting the amount column to numeric format ($ is an escape character, hence the \\ operator)
   transactiondf$Amount <- str_replace(transactiondf$Amount,pattern = "\\$", replacement = "")
   
   # Appending transactiondf to creditCardStatementDf
   creditCardStatementDf <- rbind.data.frame(creditCardStatementDf,transactiondf)
-
 }
 # completeListOfTransactions <- creditCardStatementDf ## only when reading the first file
 completeListOfTransactions <- rbind.data.frame(completeListOfTransactions,creditCardStatementDf)
 
+
 # Writing the complete list of transactions to an excel file
 write.xlsx(completeListOfTransactions, "Credit Card Statements.xlsx", sheetName = "Sheet1",
-           col.names = TRUE, row.names = TRUE, append = FALSE)
+           col.names = TRUE, row.names = FALSE, append = FALSE)
+
+# Writing as csv file:
+write.csv(completeListOfTransactions, "CC Statements CSV.csv")
