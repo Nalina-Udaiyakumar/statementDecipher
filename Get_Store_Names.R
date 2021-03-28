@@ -100,50 +100,14 @@ colnames(listOfClothingStores) <- "StoreName"
 listOfClothingStores$Category <- "Clothing" 
 
 
-
 ## Scraping all category store names from wiki page of Canadian chains -----------------
 ## Explicit call to library XML to call the specific functions in XML, not rvest and xml2
 library(XML)
 url <- "https://en.wikipedia.org/wiki/List_of_Canadian_stores"
-## ------------- For later -------------------
-
-## Add custom rows to the store directory - payments via apps, online shopping and utilities-----
-# listOfCustomStores <- c("Amazon", "Doordash","AMZN", "Bulk Barn", 
-#                         "Marshalls", "Netflix", "Cineplex", "Disney",
-#                         "Chatr", "COGECO", "Wyse", "Children's Place",
-#                         "WAL-MART", "AMAZON.CA PRIME MEMBER", "Tim Hortons", "McDonalds",
-#                         "Pizza", "Pita Pit", "Wingery", "Royal Spice",
-#                         "Dyments Farm", "Sensational Samosa", "Red Lobster", "Starbucks", 
-#                         "Skipthedishes", "Bombay Spices", "Dental", "Dentist",
-#                         "Insurance", "Payroll Deposit", "Kingscrt", "Special Deposit",
-#                         "Copper Kettle", "WAL*MART", "Supercuts", "Sephora",
-#                         "Payment", "Fee", "Indian Grocers", "Leela Supermarket",
-#                         "Anjappar")
-# 
-# listOfCustomCategories <- c("Shopping - Amazon", "Food - Take out", "Shopping - Amazon", "Groceries", 
-#                             "Shopping", "Entertainment", "Entertainment", "Entertainment",
-#                             "Phone", "Internet", "Electricity", "Clothing",
-#                             "Shopping", "Entertainment", "Coffee", "Food - Take out",
-#                             "Food - Take out", "Food - Take out", "Food - Take out", "Restaurant",
-#                             "Groceries", "Food - Take out", "Restaurant", "Coffee",
-#                             "Food - Take out", "Restaurant", "Healthcare - Dental", "Healthcare - Dental",
-#                             "Insurance", "Salary", "Rent", "Savings - RESP",
-#                             "Restaurant", "Shopping", "Grooming", "Grooming",
-#                             "Credit card payment", "Banking fee", "Groceries", "Groceries",
-#                             "Restaurant")
-# 
-# customListOfStores <- data.frame(
-#   listOfCustomStores,
-#   listOfCustomCategories,
-#   stringsAsFactors = FALSE
-# )
-# colnames(customListOfStores) <- c("StoreName", "Category")
-# write.csv(customListOfStores,"Custom list of stores.csv", 
-#           row.names = FALSE)
-
-## Read custom list of stores from a csv file in the working directory
-customListOfStores <- read.csv("Custom list of stores.csv", stringsAsFactors = FALSE,
+## ------------- Marked for future upgrade ;) -------------------
+listOfCustomStores <- read.csv("Custom list of stores.csv", stringsAsFactors = FALSE,
                                header = TRUE)
+
 
 ## Remove repetitions and creating store directory ---------------------------
 # Remove repetitions of store names in supermarket and superstore categories 
@@ -207,4 +171,4 @@ storeDirectory <- rbind.data.frame(storeDirectory,listOfClothingStores)
 # Eliminate duplicates with the custom list of store additions and add them to directory
 VectorizedGrep(listOfCustomStores,storeDirectory$StoreName)
 storeDirectory <- rbind.data.frame(storeDirectory,customListOfStores)
-
+storeDirectory <- unique(storeDirectory)
