@@ -25,8 +25,7 @@ library(xlsx)
 #### ---------- Reading the credit card statements
 
 # Setting directory to the credit card statements folder
-setwd('Your file path here')
-##!!! Don't forget to put your directory path here !!!
+setwd('//Your directory here//')
 
 # Read required files from the directory
 completeListOfTransactions <- 
@@ -94,6 +93,8 @@ storeDirectory$StoreName <- str_replace_all(string = storeDirectory$StoreName,
                                             replacement = "")
 storeDirectory$StoreName <- str_trim(storeDirectory$StoreName)
 
+
+
 ### Checks -------------------
 storeDirectory$Rank <- NA
 storeDirectory <- storeDirectory[order(storeDirectory$StoreName),]
@@ -105,6 +106,7 @@ print(unique(a))
 ## Matching storenames using grep
 storeDirectory <- storeDirectory[order(storeDirectory$Category),]
 storeDirectory$Rank <- NULL
+
 
 completeListOfTransactions1 <- completeListOfTransactions
 completeListOfTransactions1$Category <- NA
@@ -156,6 +158,24 @@ completeListOfTransactions1$Category2 <- NULL
 completeListOfTransactions <- completeListOfTransactions1
 rm(completeListOfTransactions1)
 
+## Adding extra columns for ease of processing:
+# Month of transaction
+completeListOfTransactions$Month <- format(as.Date(completeListOfTransactions$`Transaction Date`,"%b %d"),"%b")
+# Year of transaction
+completeListOfTransactions$Year <- as.integer(year(today()))
+
+if(sum(as.integer(unique(completeListOfTransactions$Month) %in% c("Dec","Jan")))==2)
+{
+completeListOfTransactions$Year <- ifelse(completeListOfTransactions$Month=="Dec",
+                                          completeListOfTransactions$Year-1,
+                                          completeListOfTransactions$Year)
+}
+
+
 ## Write the categorized transactions into a csv file
 write.csv(completeListOfTransactions, 
           "Credit Card Statements_Categorized.csv")
+
+## Not writing it in xlsx format coz it writes some erroneous cells,
+##  in the category and amount fields
+
