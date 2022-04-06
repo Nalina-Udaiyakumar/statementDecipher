@@ -1,9 +1,13 @@
 # statementDecipher
 
 Kernel: R
+
 Markdown: Absent
+
 Logs: Absent
+
 License: APACHE 2.0
+
 Purpose: Reading credit card statements from a particular bank, that are in PDF format and analysing transactions to present spending pattern.
 
 R libraries used:
